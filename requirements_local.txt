@@ -1,5 +1,5 @@
 # ============================================================
-# Verifeye — LOCAL requirements
+# LOCAL requirements
 # Run: pip install -r requirements_local.txt
 # ============================================================
 
@@ -17,9 +17,9 @@ torch==2.3.0                  # CPU-only build, no CUDA needed
 
 
 # ── URL module (XGBoost inference + feature extraction) ──────
-xgboost==2.0.3                # loads url_xgb.pkl
+xgboost==2.0.3                # loads url_xgb.ugb
 scikit-learn==1.5.0           # needed for preprocessing pipeline
-joblib==1.4.2                 # loads url_xgb.pkl + url_feature_columns.pkl
+joblib==1.4.2                 # loads url_xgb.ugb + url_feature_columns.pkl
 
 
 # ── XAI — explainability layer ───────────────────────────────
@@ -29,7 +29,7 @@ lime==0.2.0.1                 # LIME TextExplainer for NLP module
 
 # ── Image module (EfficientNet inference + Grad-CAM) ─────────
 # torch and torchvision share the same CPU build
-torchvision==0.18.0           # EfficientNet-B0 model + transforms
+torchvision==0.18.0           
 grad-cam==1.5.2               # Grad-CAM heatmap for image module
 opencv-python-headless==4.9.0.80  # heatmap overlay (headless = no GUI dep)
 Pillow==10.3.0                # image loading and resizing
@@ -41,10 +41,8 @@ numpy==1.26.4
 
 
 # ── Utilities ────────────────────────────────────────────────
-requests==2.32.2              # PhishTank DB download
 tqdm==4.66.4                  # progress bars
 matplotlib==3.9.0             # SHAP bar charts
 seaborn==0.13.2               # confusion matrix plots
 python-dotenv==1.0.1          # .env file for any API keys
-pycaret                       # model training / AutoML
 ucimlrepo==0.0.7              # UCI dataset helper

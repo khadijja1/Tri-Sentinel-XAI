@@ -14,7 +14,7 @@ import xgboost as xgb
 from sklearn.compose import ColumnTransformer
 
 
-BASE_DIR = Path(r'C:\Users\User\Documents\XAI_Social_Engineering_Detection__System')
+BASE_DIR = Path(__file__).resolve().parent.parent  
 MODEL_PATH = BASE_DIR / 'Models' / 'url_xgb.ubj'
 PREPROCESSOR_PATH = BASE_DIR / 'Models' / 'url_preprocessor.pkl'
 FEATURES_PATH = BASE_DIR / 'Models' / 'url_feature_columns.pkl'
@@ -47,6 +47,8 @@ preprocessor, feature_cols = _load_artifacts()
 
 def _build_tld_legitimacy_map() -> dict[str, float]:
     dataset_path = BASE_DIR / 'datasets' / 'PhiUSIIL_Phishing_URL_Dataset.csv'
+    if not dataset_path.exists():
+        return {} 
     data = pd.read_csv(dataset_path, usecols=['TLD', 'TLDLegitimateProb'])
     grouped = data.groupby(data['TLD'].astype(str))['TLDLegitimateProb'].mean()
     return {str(key).lower(): float(value) for key, value in grouped.items()}

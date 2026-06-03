@@ -22,7 +22,7 @@ from modules import nlp_analyzer as text_module
 from modules import url_analyzer as url_module
 
 
-BASE_DIR = Path(r"C:\Users\User\Documents\XAI_Social_Engineering_Detection__System")
+BASE_DIR = Path(__file__).resolve().parent
 URL_DATASET_PATH = BASE_DIR / "datasets" / "PhiUSIIL_Phishing_URL_Dataset.csv"
 IMAGE_MODEL_NAME = "dima806/deepfake_vs_real_image_detection"
 
@@ -121,13 +121,18 @@ def _text_probability_matrix(texts: Sequence[str]) -> np.ndarray:
 
 
 @lru_cache(maxsize=1)
+@lru_cache(maxsize=1)
 def _url_shap_explainer() -> shap.TreeExplainer:
-    background_frame = pd.read_csv(URL_DATASET_PATH, usecols=url_module.feature_cols)
-    sample_size = min(256, len(background_frame))
-    if sample_size:
+    dataset_path = BASE_DIR / "datasets" / "PhiUSIIL_Phishing_URL_Dataset.csv"
+    if dataset_path.exists():
+        background_frame = pd.read_csv(dataset_path, usecols=url_module.feature_cols)
+        sample_size = min(256, len(background_frame))
         background_frame = background_frame.sample(n=sample_size, random_state=42).reset_index(drop=True)
-    background_features = url_module.preprocessor.transform(background_frame)
-    background_array = _to_dense_array(background_features)
+        background_array = _to_dense_array(url_module.preprocessor.transform(background_frame))
+    else:
+    
+        n_features = len(url_module.feature_cols)
+        background_array = np.zeros((1, n_features), dtype=np.float32)
     return shap.TreeExplainer(url_module.model, data=background_array)
 
 

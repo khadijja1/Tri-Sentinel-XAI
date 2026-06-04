@@ -29,4 +29,4 @@ grad-cam==1.5.2
 
 # Image processing
 Pillow==10.3.0
-opencv-python-headless==4.9.0.80
+opencv-python-headless==4.8.1.78

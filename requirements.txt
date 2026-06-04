@@ -1,18 +1,32 @@
-# Streamlit Cloud deployment requirements for the app
-# Keep this file limited to runtime dependencies used by app.py and its imports.
+# ============================================================
+# Tri-Sentinel XAI — Streamlit Cloud runtime requirements
+# Pinned to exact versions confirmed working locally.
+# Python 3.11 (Streamlit Cloud default)
+# ============================================================
 
+# UI
 streamlit==1.35.0
-pandas==2.2.2
+
+# Data
+pandas==2.1.4
 numpy==1.26.4
 requests==2.32.2
-joblib==1.4.2
-scikit-learn==1.5.0
+
+# URL module
+scikit-learn==1.4.2
 xgboost==2.0.3
+joblib==1.3.2
+
+# NLP + Image modules (HuggingFace)
 transformers==4.41.2
 torch==2.3.0
 torchvision==0.18.0
+
+# XAI
 shap==0.45.1
 lime==0.2.0.1
-Pillow==10.3.0
 grad-cam==1.5.2
+
+# Image processing
+Pillow==10.3.0
 opencv-python-headless==4.9.0.80

@@ -175,7 +175,8 @@ def explain_url(url: str, top_k: int = 10) -> dict[str, Any]:
     feature_names = list(url_module.preprocessor.get_feature_names_out(url_module.feature_cols))
 
     explainer = _url_shap_explainer()
-    shap_values = explainer.shap_values(transformed_features, check_additivity=False)
+    explanation = explainer(transformed_features, check_additivity=False)
+    shap_values = explanation.values
     if isinstance(shap_values, list):
         shap_array = np.asarray(shap_values[1 if len(shap_values) > 1 else 0], dtype=np.float32).reshape(-1)
     else:

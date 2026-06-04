@@ -123,17 +123,14 @@ def _text_probability_matrix(texts: Sequence[str]) -> np.ndarray:
 @lru_cache(maxsize=1)
 @lru_cache(maxsize=1)
 def _url_shap_explainer() -> shap.TreeExplainer:
-    dataset_path = BASE_DIR / "datasets" / "PhiUSIIL_Phishing_URL_Dataset.csv"
-    if dataset_path.exists():
-        background_frame = pd.read_csv(dataset_path, usecols=url_module.feature_cols)
-        sample_size = min(256, len(background_frame))
-        background_frame = background_frame.sample(n=sample_size, random_state=42).reset_index(drop=True)
-        background_array = _to_dense_array(url_module.preprocessor.transform(background_frame))
-    else:
-    
-        n_features = len(url_module.feature_cols)
-        background_array = np.zeros((1, n_features), dtype=np.float32)
-    return shap.TreeExplainer(url_module.model, data=background_array)
+    # model_output="probability" makes SHAP work in probability space
+    # and eliminates the need for a background dataset CSV entirely.
+    # Without a background dataset the previous fallback (all-zeros array)
+    # was inverting the SHAP reference point on Streamlit Cloud — this fixes that.
+    return shap.TreeExplainer(
+        url_module.model,
+        model_output="probability",
+    )
 
 
 @lru_cache(maxsize=1)
@@ -171,42 +168,51 @@ def _url_predict_proba(urls: Sequence[str]) -> np.ndarray:
 
 def explain_url(url: str, top_k: int = 10) -> dict[str, Any]:
     raw_features = url_module.extract_features_from_url(url)
-    transformed_features = _to_dense_array(url_module.preprocessor.transform(raw_features))
-    feature_names = list(url_module.preprocessor.get_feature_names_out(url_module.feature_cols))
-
+    transformed_features = _to_dense_array(
+        url_module.preprocessor.transform(raw_features)
+    )
+    feature_names = list(
+        url_module.preprocessor.get_feature_names_out(url_module.feature_cols)
+    )
+ 
     explainer = _url_shap_explainer()
     explanation = explainer(transformed_features, check_additivity=False)
-    shap_values = explanation.values
-    if isinstance(shap_values, list):
-        shap_array = np.asarray(shap_values[1 if len(shap_values) > 1 else 0], dtype=np.float32).reshape(-1)
-    else:
-        shap_array = np.asarray(shap_values, dtype=np.float32).reshape(-1)
-
-    contributions, positive_contributions, negative_contributions = _directional_contributions(
-        feature_names,
-        shap_array,
-        top_k,
+    shap_values = np.asarray(explanation.values, dtype=np.float32).reshape(-1)
+ 
+    # XGBoost binary model with model_output="probability":
+    # SHAP returns values for class 1 (legitimate).
+    # Negate so that positive values = push toward phishing,
+    # negative values = push toward legitimate.
+    # This aligns with how predict_url defines label 0 = phishing.
+    shap_array = -shap_values
+ 
+    contributions, positive_contributions, negative_contributions = (
+        _directional_contributions(feature_names, shap_array, top_k)
     )
+ 
     prediction = url_module.predict_url(url)
-
+ 
+    # expected_value is a scalar for model_output="probability"
+    base_value = float(np.asarray(explainer.expected_value).reshape(-1)[-1])
+ 
     return {
-        'url': url,
-        'prediction': prediction,
-        'probabilities': {
-            'legit_prob': float(prediction['legit_prob']),
-            'phishing_prob': float(prediction['phishing_prob']),
+        "url": url,
+        "prediction": prediction,
+        "probabilities": {
+            "legit_prob": float(prediction["legit_prob"]),
+            "phishing_prob": float(prediction["phishing_prob"]),
         },
-        'base_value': float(np.asarray(explainer.expected_value).reshape(-1)[0]),
-        'feature_contributions': contributions,
-        'positive_contributions': positive_contributions,
-        'negative_contributions': negative_contributions,
-        'summary': _summarize_contributions(
+        "base_value": base_value,
+        "feature_contributions": contributions,
+        "positive_contributions": positive_contributions,
+        "negative_contributions": negative_contributions,
+        "summary": _summarize_contributions(
             positive_contributions,
             negative_contributions,
-            'Signals pushing toward phishing',
-            'Signals pushing toward legitimacy',
+            "Signals pushing toward phishing",
+            "Signals pushing toward legitimacy",
         ),
-        'transformed_feature_names': feature_names,
+        "transformed_feature_names": feature_names,
     }
 
 

@@ -12,9 +12,6 @@ import torch.nn.functional as F
 from torch import nn
 from lime.lime_text import LimeTextExplainer
 from PIL import Image
-from pytorch_grad_cam import GradCAM
-from pytorch_grad_cam.utils.image import show_cam_on_image
-from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 from transformers import AutoImageProcessor
 
 from modules import deepfake_image_analyzer as image_module
@@ -282,6 +279,18 @@ def _resolve_image_target_layer(model: nn.Module) -> nn.Module:
 
 
 def explain_image(image_input: str | Image.Image) -> dict[str, Any]:
+    try:
+        from pytorch_grad_cam import GradCAM
+        from pytorch_grad_cam.utils.image import show_cam_on_image
+        from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
+    except ImportError as e:
+        return {
+            'image': _load_image(image_input),
+            'prediction': {},
+            'heatmap': _load_image(image_input),
+            'target_layer': 'unavailable',
+            'summary': f'Grad-CAM unavailable on this load — please refresh. ({e})',
+        }
     image = _load_image(image_input)
     classifier = image_module.get_classifier()
     processor = _image_processor()

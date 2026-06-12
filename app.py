@@ -111,11 +111,16 @@ with tab_image:
 
         if st.button('Analyze image', type='primary', key='analyze_image'):
             with st.spinner('Running image prediction and Grad-CAM explanation...'):
-                prediction = predict_image(preview_image)
-                image_info = explain_image(preview_image)
-            st.json(prediction)
-            st.subheader('Responsible AI explanation')
-            if image_info.get('summary'):
-                st.write(image_info['summary'])
-            st.image(image_info['heatmap'], caption='Grad-CAM heatmap', use_column_width=True)
-            st.caption(f"Target layer: {image_info['target_layer']}")
+                try:
+                    prediction = predict_image(preview_image)
+                    image_info = explain_image(preview_image)
+                    st.json(prediction)
+                    st.subheader('Responsible AI explanation')
+                    if image_info.get('summary'):
+                        st.write(image_info['summary'])
+                    if image_info.get('heatmap'):
+                        st.image(image_info['heatmap'], caption='Grad-CAM heatmap', use_column_width=True)
+                    st.caption(f"Target layer: {image_info['target_layer']}")
+                except Exception as e:
+                    st.error(f'Image analysis failed on this load. Please refresh and try again.')
+                    st.caption(f'Technical detail: {str(e)}')

@@ -25,8 +25,7 @@ torchvision==0.18.0
 # XAI
 shap==0.44.1
 lime==0.2.0.1
-grad-cam==1.5.2
+
 
 # Image processing
 Pillow==10.3.0
-opencv-python-headless==4.8.1.78
